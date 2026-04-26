@@ -1,57 +1,24 @@
 # Credit risk modelling
 
-Small project for exploring **default-risk** style binary classification: loading tabular credit data, training **logistic regression**, **decision trees**, or **XGBoost**, and analysing how **probability thresholds** affect **accuracy**, **precision**, **recall**, and **F1** (plus **ROC-AUC**).
+Binary classification stuff — default vs not, that kind of thing. There’s a Streamlit app where you mess with thresholds and see what happens to accuracy / precision / recall / F1 and ROC-AUC. Models: logistic regression, decision tree, XGBoost.
 
-## Interactive web app (recommended)
-
-A **Streamlit** dashboard lets you upload a CSV (or use the bundled sample), tune model hyperparameters, sweep classification cutoffs, and inspect confusion matrices and reports.
-
-### Requirements
-
-- Python 3.10+ recommended  
-- Dependencies are listed in [`requirements.txt`](requirements.txt) (`pandas`, `numpy`, `scikit-learn`, `xgboost`, `streamlit`, `altair` for the metrics chart).
-
-### Install
+**Run it**
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Run
-
-From the project root (where `credit_data.csv` or your data lives):
-
-```bash
 streamlit run web_app.py
 ```
 
-The app opens in your browser. Use the sidebar to:
+Open the sidebar: language (EN/PL text is in `locale_strings.py`), pick your CSV or use `credit_data.csv`, set the target column (defaults to `default`), drop IDs if you want, then model + params. The chart is Altair; no zoom on purpose.
 
-- Choose **English** or **Polski** (strings live in [`locale_strings.py`](locale_strings.py)).
-- Load data, set the **target** column (default name: `default`), and optional **columns to drop** (e.g. `client_id`).
-- Pick a **model** and its parameters, then adjust the **threshold sweep** range and step.
-- Read metrics vs threshold, best cutoffs for each metric on the grid, and a numeric table.
+Target should be 0/1 integers. Cat columns get one-hot’d; anything else weird/non-numeric tends to get dropped after preprocessing.
 
-### Data format
+**Old file**
 
-- CSV with a **binary integer target** (0/1), e.g. `default`.
-- Categorical columns are one-hot encoded (`drop_first=True`); non-numeric columns that are not encoded are dropped after preprocessing.
-- The sample file [`credit_data.csv`](credit_data.csv) matches the original coursework-style layout (`client_id`, numeric features, `marital_status`, `property_type`, `default`).
+`CreditRisk.py` is leftover from before the app. Imports are broken (`plt`, `numpy.dual`) so don’t expect it to run unless you fix that. Use `web_app.py`.
 
-## Legacy script
+**Files**
 
-[`CreditRisk.py`](CreditRisk.py) is an earlier **script** that trains models on `credit_data.csv` and prints threshold-style analysis. It currently has **invalid imports** (`import plt`, `from numpy.dual import solve`) and will not run until those are fixed (e.g. `import matplotlib.pyplot as plt` and remove the unused `solve` import). Prefer **`web_app.py`** for day-to-day use.
+`web_app.py` — main app. `locale_strings.py` — translations. `requirements.txt` — deps. `credit_data.csv` — small example with `client_id`, some numbers, `marital_status`, `property_type`, `default`.
 
-## Project layout
-
-| File | Purpose |
-|------|--------|
-| `web_app.py` | Streamlit UI, training, threshold curves, best-threshold summary |
-| `locale_strings.py` | English / Polish UI strings |
-| `credit_data.csv` | Example dataset |
-| `requirements.txt` | Python dependencies |
-| `CreditRisk.py` | Legacy training script (imports need repair) |
-
-## Licence
-
-No licence is specified in this repository; add one if you plan to share or publish the code.
+No licence file here; add one if you care about that.
