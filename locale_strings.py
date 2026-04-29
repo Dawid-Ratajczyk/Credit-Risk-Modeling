@@ -19,7 +19,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "csv_help": (
             "Each row is one observation; columns are inputs to the model. "
             "Expect a binary target (0/1), e.g. no default vs default. "
-            "If you upload a file, it is used instead of the sample CSV."
+            "If you upload a file, it is used instead of the sample CSV. "
+            "Maximum upload size: 10 MB."
         ),
         "use_sample": "Use bundled credit_data.csv",
         "use_sample_help": (
@@ -203,6 +204,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "info_upload": "Upload a CSV or enable the sample dataset.",
         "err_no_credit_file": "credit_data.csv not found in the working directory.",
         "err_load_data": "Could not load data:",
+        "err_csv_too_large": "CSV file is too large (maximum {max_mb} MB).",
         "err_target_not_found": "Target column '{col}' not found.",
         "err_no_numeric_features": "No numeric features after preprocessing.",
         "metric_rows": "Rows",
@@ -355,7 +357,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "csv_help": (
             "Każdy wiersz to jedna obserwacja; kolumny to cechy modelu. "
             "Oczekiwana jest binarna zmienna celu (0/1), np. brak przeterminowania vs przeterminowanie. "
-            "Po wgraniu pliku jest on używany zamiast przykładowego CSV."
+            "Po wgraniu pliku jest on używany zamiast przykładowego CSV. "
+            "Maksymalny rozmiar pliku: 10 MB."
         ),
         "use_sample": "Użyj wbudowanego credit_data.csv",
         "use_sample_help": (
@@ -531,6 +534,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "info_upload": "Wgraj plik CSV lub włącz przykładowy zbiór danych.",
         "err_no_credit_file": "Nie znaleziono pliku credit_data.csv w katalogu roboczym.",
         "err_load_data": "Nie udało się wczytać danych:",
+        "err_csv_too_large": "Plik CSV jest za duży (maksymalnie {max_mb} MB).",
         "err_target_not_found": "Nie znaleziono kolumny celu „{col}”.",
         "err_no_numeric_features": "Brak numerycznych cech po preprocessingu.",
         "metric_rows": "Wiersze",

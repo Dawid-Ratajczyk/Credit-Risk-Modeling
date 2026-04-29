@@ -31,6 +31,7 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 ZERO_DIV = 0
+MAX_CSV_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MiB cap for uploaded CSV
 
 
 def section_title(title: str, info_md: str) -> None:
@@ -960,7 +961,17 @@ def main() -> None:
         if use_sample and uploaded is None:
             df = pd.read_csv("credit_data.csv")
         elif uploaded is not None:
-            df = pd.read_csv(io.BytesIO(uploaded.getvalue()))
+            raw_csv = uploaded.getvalue()
+            if len(raw_csv) > MAX_CSV_UPLOAD_BYTES:
+                st.error(
+                    tr(
+                        lang,
+                        "err_csv_too_large",
+                        max_mb=MAX_CSV_UPLOAD_BYTES // (1024 * 1024),
+                    )
+                )
+                return
+            df = pd.read_csv(io.BytesIO(raw_csv))
         else:
             st.info(tr(lang, "info_upload"))
             return

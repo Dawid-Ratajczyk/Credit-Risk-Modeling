@@ -1,0 +1,12 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Dashboard → New → Blueprint → pick repo with this file (or create Web Service and mirror these settings).
+
+services:
+  - type: web
+    name: credit-risk-modelling
+    runtime: python
+    plan: free # starter | standard | … for always-on + more resources
+    region: oregon # oregon | ohio | virginia | frankfurt | singapore
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: streamlit run web_app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless true --browser.gatherUsageStats false
+    healthCheckPath: /_stcore/health
