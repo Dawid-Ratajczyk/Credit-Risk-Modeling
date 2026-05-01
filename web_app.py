@@ -27,22 +27,124 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
 
 ZERO_DIV = 0
 MAX_CSV_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MiB cap for uploaded CSV
 
 
-def section_title(title: str, info_md: str) -> None:
-    """Subheader with a compact ℹ️ popover for longer theory text."""
-    left, right = st.columns([1, 0.12], gap="small")
-    with left:
-        st.subheader(title)
-    with right:
-        st.markdown("")  # align popover below title row
-        with st.popover("ℹ️"):
-            st.markdown(info_md)
+def section_title(title: str) -> None:
+    """Simple section title without inline theory popovers."""
+    st.subheader(title)
+
+
+def render_theory_page(lang: str) -> None:
+    """Standalone page with explanations previously behind ℹ️ buttons."""
+    st.title(tr(lang, "theory_title"))
+    st.caption(tr(lang, "theory_intro"))
+
+    section_title(tr(lang, "header_model"))
+    st.markdown(f"### {tr(lang, 'model_logistic')}")
+    st.markdown(tr(lang, "theory_model_logistic"))
+    st.markdown(
+        "\n".join(
+            [
+                f"- `{tr(lang, 'max_iter')}`: {tr(lang, 'max_iter_help')}",
+                f"- `{tr(lang, 'lr_c')}`: {tr(lang, 'lr_c_help')}",
+                f"- `{tr(lang, 'penalty')}`: {tr(lang, 'penalty_help')}",
+                f"- `{tr(lang, 'fit_intercept')}`: {tr(lang, 'fit_intercept_help')}",
+                f"- `{tr(lang, 'tol')}`: {tr(lang, 'tol_help')}",
+            ]
+        )
+    )
+
+    st.markdown(f"### {tr(lang, 'model_tree')}")
+    st.markdown(tr(lang, "theory_model_tree"))
+    st.markdown(
+        "\n".join(
+            [
+                f"- `{tr(lang, 'tree_max_depth')}`: {tr(lang, 'tree_max_depth_help')}",
+                f"- `{tr(lang, 'min_samples_leaf')}`: {tr(lang, 'min_samples_leaf_help')}",
+                f"- `{tr(lang, 'min_samples_split')}`: {tr(lang, 'min_samples_split_help')}",
+                f"- `{tr(lang, 'criterion')}`: {tr(lang, 'criterion_help')}",
+                f"- `{tr(lang, 'max_features')}`: {tr(lang, 'max_features_help')}",
+                f"- `{tr(lang, 'max_leaf_nodes')}`: {tr(lang, 'max_leaf_nodes_help')}",
+                f"- `{tr(lang, 'min_impurity_decrease')}`: {tr(lang, 'min_impurity_decrease_help')}",
+            ]
+        )
+    )
+
+    st.markdown(f"### {tr(lang, 'model_random_forest')}")
+    st.markdown(tr(lang, "theory_model_random_forest"))
+    st.markdown(
+        "\n".join(
+            [
+                f"- `{tr(lang, 'rf_n_estimators')}`: {tr(lang, 'rf_n_estimators_help')}",
+                f"- `{tr(lang, 'rf_max_depth')}`: {tr(lang, 'rf_max_depth_help')}",
+                f"- `{tr(lang, 'min_samples_leaf')}`: {tr(lang, 'min_samples_leaf_help')}",
+                f"- `{tr(lang, 'min_samples_split')}`: {tr(lang, 'min_samples_split_help')}",
+                f"- `{tr(lang, 'max_features')}`: {tr(lang, 'max_features_help')}",
+                f"- `{tr(lang, 'max_leaf_nodes')}`: {tr(lang, 'max_leaf_nodes_help')}",
+                f"- `{tr(lang, 'min_impurity_decrease')}`: {tr(lang, 'min_impurity_decrease_help')}",
+                f"- `{tr(lang, 'rf_bootstrap')}`: {tr(lang, 'rf_bootstrap_help')}",
+            ]
+        )
+    )
+
+    st.markdown(f"### {tr(lang, 'model_xgboost')}")
+    st.markdown(tr(lang, "theory_model_xgboost"))
+    st.markdown(
+        "\n".join(
+            [
+                f"- `{tr(lang, 'n_estimators')}`: {tr(lang, 'n_estimators_help')}",
+                f"- `{tr(lang, 'xgb_max_depth')}`: {tr(lang, 'xgb_max_depth_help')}",
+                f"- `{tr(lang, 'learning_rate')}`: {tr(lang, 'learning_rate_help')}",
+                f"- `{tr(lang, 'subsample')}`: {tr(lang, 'subsample_help')}",
+                f"- `{tr(lang, 'colsample_bytree')}`: {tr(lang, 'colsample_bytree_help')}",
+                f"- `{tr(lang, 'min_child_weight')}`: {tr(lang, 'min_child_weight_help')}",
+                f"- `{tr(lang, 'gamma')}`: {tr(lang, 'gamma_help')}",
+                f"- `{tr(lang, 'reg_alpha')}`: {tr(lang, 'reg_alpha_help')}",
+                f"- `{tr(lang, 'reg_lambda')}`: {tr(lang, 'reg_lambda_help')}",
+                f"- `scale_pos_weight`: {tr(lang, 'spw_popover')}",
+            ]
+        )
+    )
+
+    st.markdown(f"### {tr(lang, 'model_catboost')}")
+    st.markdown(tr(lang, "theory_model_catboost"))
+    st.markdown(
+        "\n".join(
+            [
+                f"- `{tr(lang, 'cat_iterations')}`: {tr(lang, 'cat_iterations_help')}",
+                f"- `{tr(lang, 'cat_depth')}`: {tr(lang, 'cat_depth_help')}",
+                f"- `{tr(lang, 'cat_learning_rate')}`: {tr(lang, 'cat_learning_rate_help')}",
+                f"- `{tr(lang, 'cat_l2_leaf_reg')}`: {tr(lang, 'cat_l2_leaf_reg_help')}",
+            ]
+        )
+    )
+
+    st.markdown(f"### {tr(lang, 'class_weights')}")
+    st.markdown(tr(lang, "class_weights_popover"))
+
+    section_title(tr(lang, "header_threshold_sweep"))
+    st.markdown(f"- {tr(lang, 't_min_help')}")
+    st.markdown(f"- {tr(lang, 't_max_help')}")
+    st.markdown(f"- {tr(lang, 't_step_help')}")
+    st.markdown(f"- {tr(lang, 'slider_threshold_help')}")
+
+    section_title(tr(lang, "sec_metrics_vs_t"))
+    st.markdown(tr(lang, "sec_metrics_vs_t_info"))
+
+    section_title(tr(lang, "sec_pick_threshold"))
+    st.markdown(f"- {tr(lang, 'sec_pick_threshold_info')}")
+    st.markdown(f"- {tr(lang, 'cm_popover')}")
+    st.markdown(f"- {tr(lang, 'cr_popover')}")
+
+    section_title(tr(lang, "sec_numeric"))
+    st.markdown(tr(lang, "sec_numeric_info"))
 
 
 def preprocess_features(
@@ -91,7 +193,7 @@ def _tree_max_features_ui(val: str) -> Any:
 
 
 def make_model(
-    kind: Literal["logistic", "tree", "xgboost"],
+    kind: Literal["logistic", "tree", "random_forest", "xgboost", "catboost"],
     random_state: int,
     lr_max_iter: int,
     lr_C: float,
@@ -107,6 +209,14 @@ def make_model(
     tree_max_features_ui: str,
     tree_max_leaf_nodes: int,
     tree_min_impurity_decrease: float,
+    rf_n_estimators: int,
+    rf_max_depth: int | None,
+    rf_min_samples_leaf: int,
+    rf_min_samples_split: int,
+    rf_max_features_ui: str,
+    rf_max_leaf_nodes: int,
+    rf_min_impurity_decrease: float,
+    rf_bootstrap: bool,
     xgb_n_estimators: int,
     xgb_max_depth: int,
     xgb_learning_rate: float,
@@ -117,6 +227,10 @@ def make_model(
     xgb_gamma: float,
     xgb_reg_alpha: float,
     xgb_reg_lambda: float,
+    cat_iterations: int,
+    cat_depth: int,
+    cat_learning_rate: float,
+    cat_l2_leaf_reg: float,
 ) -> Any:
     cw = build_class_weight(cw0, cw1)
     if kind == "logistic":
@@ -150,6 +264,37 @@ def make_model(
             max_features=_tree_max_features_ui(tree_max_features_ui),
             max_leaf_nodes=mlf,
             min_impurity_decrease=float(tree_min_impurity_decrease),
+        )
+    if kind == "random_forest":
+        rf_mlf = (
+            None
+            if int(rf_max_leaf_nodes) <= 0
+            else int(rf_max_leaf_nodes)
+        )
+        return RandomForestClassifier(
+            n_estimators=int(rf_n_estimators),
+            class_weight=cw,
+            random_state=random_state,
+            max_depth=None if rf_max_depth == 0 else int(rf_max_depth),
+            min_samples_leaf=int(rf_min_samples_leaf),
+            min_samples_split=int(rf_min_samples_split),
+            max_features=_tree_max_features_ui(rf_max_features_ui),
+            max_leaf_nodes=rf_mlf,
+            min_impurity_decrease=float(rf_min_impurity_decrease),
+            bootstrap=bool(rf_bootstrap),
+            n_jobs=-1,
+        )
+    if kind == "catboost":
+        return CatBoostClassifier(
+            random_seed=random_state,
+            iterations=int(cat_iterations),
+            depth=int(cat_depth),
+            learning_rate=float(cat_learning_rate),
+            l2_leaf_reg=float(cat_l2_leaf_reg),
+            loss_function="Logloss",
+            eval_metric="Logloss",
+            class_weights=[float(cw0), float(cw1)],
+            verbose=False,
         )
     return XGBClassifier(
         random_state=random_state,
@@ -390,7 +535,7 @@ def _max_f1_on_test_grid(
     eval_msg: str,
 ) -> float:
     try:
-        if model_kind == "xgboost":
+        if model_kind in ("xgboost", "catboost"):
             model.fit(X_train, y_train)
         else:
             model.fit(X_train, np.ravel(y_train.values))
@@ -407,7 +552,7 @@ def _max_f1_on_test_grid(
 
 
 def search_best_f1_hyperparams(
-    model_kind: Literal["logistic", "tree", "xgboost"],
+    model_kind: Literal["logistic", "tree", "random_forest", "xgboost", "catboost"],
     X_train: pd.DataFrame,
     y_train: pd.Series,
     X_test: pd.DataFrame,
@@ -426,12 +571,17 @@ def search_best_f1_hyperparams(
     tree_max_features_ui: str,
     tree_max_leaf_nodes: int,
     tree_min_impurity_decrease: float,
+    rf_max_features_ui: str,
+    rf_max_leaf_nodes: int,
+    rf_min_impurity_decrease: float,
+    rf_bootstrap: bool,
     xgb_subsample: float,
     xgb_colsample_bytree: float,
     xgb_min_child_weight: float,
     xgb_gamma: float,
     xgb_reg_alpha: float,
     xgb_reg_lambda: float,
+    cat_l2_leaf_reg: float,
     progress_callback: Callable[[int, int], None] | None = None,
 ) -> tuple[float, dict[str, Any]]:
     """
@@ -441,13 +591,45 @@ def search_best_f1_hyperparams(
     best_f1 = -1.0
     best_updates: dict[str, Any] = {}
 
-    # Unused-branch placeholders for make_model (ignored by sklearn per kind).
-    d_tree_depth, d_leaf, d_split = 5, 10, 2
-    d_crit, d_mxf, d_mln, d_mid = "gini", "all", 0, 0.0
-    d_ne, d_md, d_lr = 100, 6, 0.1
-    d_spw = float(base_spw) if model_kind == "xgboost" else 1.0
-    d_sub, d_col, d_mcw = 1.0, 1.0, 1.0
-    d_ga, d_ra, d_rl = 0.0, 0.0, 1.0
+    base_kwargs: dict[str, Any] = {
+        "random_state": int(random_state),
+        "lr_max_iter": int(lr_max_iter),
+        "lr_C": 1.0,
+        "lr_penalty": "l2",
+        "lr_fit_intercept": bool(lr_fit_intercept),
+        "lr_tol": float(lr_tol),
+        "cw0": float(cw0),
+        "cw1": float(cw1),
+        "tree_max_depth": 5,
+        "tree_min_samples_leaf": 10,
+        "tree_min_samples_split": 2,
+        "tree_criterion": str(tree_criterion),
+        "tree_max_features_ui": str(tree_max_features_ui),
+        "tree_max_leaf_nodes": int(tree_max_leaf_nodes),
+        "tree_min_impurity_decrease": float(tree_min_impurity_decrease),
+        "rf_n_estimators": 200,
+        "rf_max_depth": 8,
+        "rf_min_samples_leaf": 1,
+        "rf_min_samples_split": 2,
+        "rf_max_features_ui": str(rf_max_features_ui),
+        "rf_max_leaf_nodes": int(rf_max_leaf_nodes),
+        "rf_min_impurity_decrease": float(rf_min_impurity_decrease),
+        "rf_bootstrap": bool(rf_bootstrap),
+        "xgb_n_estimators": 100,
+        "xgb_max_depth": 6,
+        "xgb_learning_rate": 0.1,
+        "xgb_scale_pos_weight": float(base_spw),
+        "xgb_subsample": float(xgb_subsample),
+        "xgb_colsample_bytree": float(xgb_colsample_bytree),
+        "xgb_min_child_weight": float(xgb_min_child_weight),
+        "xgb_gamma": float(xgb_gamma),
+        "xgb_reg_alpha": float(xgb_reg_alpha),
+        "xgb_reg_lambda": float(xgb_reg_lambda),
+        "cat_iterations": 400,
+        "cat_depth": 6,
+        "cat_learning_rate": 0.1,
+        "cat_l2_leaf_reg": float(cat_l2_leaf_reg),
+    }
 
     if model_kind == "logistic":
         grid_c = [0.01, 0.07, 0.3, 1.0, 3.0, 10.0]
@@ -455,34 +637,7 @@ def search_best_f1_hyperparams(
         combos = list(itertools.product(grid_c, grid_pen))
         total = len(combos)
         for i, (C, pen) in enumerate(combos):
-            m = make_model(
-                "logistic",
-                int(random_state),
-                int(lr_max_iter),
-                float(C),
-                str(pen),
-                bool(lr_fit_intercept),
-                float(lr_tol),
-                cw0,
-                cw1,
-                d_tree_depth,
-                d_leaf,
-                d_split,
-                d_crit,
-                d_mxf,
-                d_mln,
-                d_mid,
-                d_ne,
-                d_md,
-                d_lr,
-                d_spw,
-                d_sub,
-                d_col,
-                d_mcw,
-                d_ga,
-                d_ra,
-                d_rl,
-            )
+            m = make_model(kind="logistic", **base_kwargs, lr_C=float(C), lr_penalty=str(pen))
             f1m = _max_f1_on_test_grid(
                 m, "logistic", X_train, y_train, X_test, y_test, thresholds, eval_msg
             )
@@ -499,32 +654,11 @@ def search_best_f1_hyperparams(
         total = len(combos)
         for i, (td, lf, sp) in enumerate(combos):
             m = make_model(
-                "tree",
-                int(random_state),
-                1000,
-                1.0,
-                "l2",
-                True,
-                1e-4,
-                cw0,
-                cw1,
-                int(td),
-                int(lf),
-                int(sp),
-                str(tree_criterion),
-                str(tree_max_features_ui),
-                int(tree_max_leaf_nodes),
-                float(tree_min_impurity_decrease),
-                d_ne,
-                d_md,
-                d_lr,
-                1.0,
-                d_sub,
-                d_col,
-                d_mcw,
-                d_ga,
-                d_ra,
-                d_rl,
+                kind="tree",
+                **base_kwargs,
+                tree_max_depth=int(td),
+                tree_min_samples_leaf=int(lf),
+                tree_min_samples_split=int(sp),
             )
             f1m = _max_f1_on_test_grid(
                 m, "tree", X_train, y_train, X_test, y_test, thresholds, eval_msg
@@ -538,53 +672,88 @@ def search_best_f1_hyperparams(
                 }
             if progress_callback is not None:
                 progress_callback(i + 1, total)
-    else:
-        grid_ne = [50, 100, 200]
-        grid_md = [3, 6, 9]
-        grid_lr = [0.05, 0.1, 0.2]
-        combos = list(itertools.product(grid_ne, grid_md, grid_lr))
+    elif model_kind == "random_forest":
+        grid_ne = [100, 200, 400]
+        grid_depth = [0, 6, 12]
+        grid_leaf = [1, 5, 10]
+        combos = list(itertools.product(grid_ne, grid_depth, grid_leaf))
         total = len(combos)
-        for i, (ne, md, lr) in enumerate(combos):
+        for i, (ne, md, lf) in enumerate(combos):
             m = make_model(
-                "xgboost",
-                int(random_state),
-                1000,
-                1.0,
-                "l2",
-                True,
-                1e-4,
-                cw0,
-                cw1,
-                d_tree_depth,
-                d_leaf,
-                d_split,
-                d_crit,
-                d_mxf,
-                d_mln,
-                d_mid,
-                int(ne),
-                int(md),
-                float(lr),
-                float(base_spw),
-                float(xgb_subsample),
-                float(xgb_colsample_bytree),
-                float(xgb_min_child_weight),
-                float(xgb_gamma),
-                float(xgb_reg_alpha),
-                float(xgb_reg_lambda),
+                kind="random_forest",
+                **base_kwargs,
+                rf_n_estimators=int(ne),
+                rf_max_depth=int(md),
+                rf_min_samples_leaf=int(lf),
+                rf_min_samples_split=2,
             )
             f1m = _max_f1_on_test_grid(
-                m, "xgboost", X_train, y_train, X_test, y_test, thresholds, eval_msg
+                m, "random_forest", X_train, y_train, X_test, y_test, thresholds, eval_msg
             )
             if f1m > best_f1:
                 best_f1 = f1m
                 best_updates = {
-                    "p_xgb_n_estimators": int(ne),
-                    "p_xgb_max_depth": int(md),
-                    "p_xgb_learning_rate": float(lr),
+                    "p_rf_n_estimators": int(ne),
+                    "p_rf_max_depth": int(md),
+                    "p_rf_min_samples_leaf": int(lf),
                 }
             if progress_callback is not None:
                 progress_callback(i + 1, total)
+    else:
+        if model_kind == "xgboost":
+            grid_ne = [50, 100, 200]
+            grid_md = [3, 6, 9]
+            grid_lr = [0.05, 0.1, 0.2]
+            combos = list(itertools.product(grid_ne, grid_md, grid_lr))
+            total = len(combos)
+            for i, (ne, md, lr) in enumerate(combos):
+                m = make_model(
+                    kind="xgboost",
+                    **base_kwargs,
+                    xgb_n_estimators=int(ne),
+                    xgb_max_depth=int(md),
+                    xgb_learning_rate=float(lr),
+                    xgb_scale_pos_weight=float(base_spw),
+                )
+                f1m = _max_f1_on_test_grid(
+                    m, "xgboost", X_train, y_train, X_test, y_test, thresholds, eval_msg
+                )
+                if f1m > best_f1:
+                    best_f1 = f1m
+                    best_updates = {
+                        "p_xgb_n_estimators": int(ne),
+                        "p_xgb_max_depth": int(md),
+                        "p_xgb_learning_rate": float(lr),
+                    }
+                if progress_callback is not None:
+                    progress_callback(i + 1, total)
+        else:
+            grid_it = [200, 400, 600]
+            grid_depth = [4, 6, 8]
+            grid_lr = [0.03, 0.1, 0.2]
+            combos = list(itertools.product(grid_it, grid_depth, grid_lr))
+            total = len(combos)
+            for i, (it, depth, lr) in enumerate(combos):
+                m = make_model(
+                    kind="catboost",
+                    **base_kwargs,
+                    cat_iterations=int(it),
+                    cat_depth=int(depth),
+                    cat_learning_rate=float(lr),
+                    cat_l2_leaf_reg=float(cat_l2_leaf_reg),
+                )
+                f1m = _max_f1_on_test_grid(
+                    m, "catboost", X_train, y_train, X_test, y_test, thresholds, eval_msg
+                )
+                if f1m > best_f1:
+                    best_f1 = f1m
+                    best_updates = {
+                        "p_cat_iterations": int(it),
+                        "p_cat_depth": int(depth),
+                        "p_cat_learning_rate": float(lr),
+                    }
+                if progress_callback is not None:
+                    progress_callback(i + 1, total)
 
     return best_f1, best_updates
 
@@ -614,6 +783,16 @@ def main() -> None:
             key="app_lang",
         )
         lang = st.session_state.app_lang
+        page = st.radio(
+            tr(lang, "nav_page"),
+            ["workbench", "theory"],
+            format_func=lambda x: {
+                "workbench": tr(lang, "nav_workbench"),
+                "theory": tr(lang, "nav_theory"),
+            }[x],
+            key="app_page",
+        )
+
         st.caption(tr(lang, "ux_sidebar_hint"))
         st.divider()
 
@@ -657,23 +836,19 @@ def main() -> None:
         st.header(tr(lang, "header_model"))
         model_kind = st.selectbox(
             tr(lang, "model"),
-            ["logistic", "tree", "xgboost"],
+            ["logistic", "tree", "random_forest", "xgboost", "catboost"],
             format_func=lambda x: {
                 "logistic": tr(lang, "model_logistic"),
                 "tree": tr(lang, "model_tree"),
+                "random_forest": tr(lang, "model_random_forest"),
                 "xgboost": tr(lang, "model_xgboost"),
+                "catboost": tr(lang, "model_catboost"),
             }[x],
             help=tr(lang, "model_help"),
             key="p_model_kind",
         )
 
-        cw_head, cw_info = st.columns([0.82, 0.18], gap="small")
-        with cw_head:
-            st.subheader(tr(lang, "class_weights"))
-        with cw_info:
-            st.markdown("")
-            with st.popover("ℹ️"):
-                st.markdown(tr(lang, "class_weights_popover"))
+        st.subheader(tr(lang, "class_weights"))
         cw0 = st.number_input(
             tr(lang, "weight_0"),
             min_value=0.01,
@@ -701,6 +876,14 @@ def main() -> None:
         tree_max_features_ui = "all"
         tree_max_leaf_nodes = 0
         tree_min_impurity_decrease = 0.0
+        rf_n_estimators = 200
+        rf_max_depth = 8
+        rf_min_samples_leaf = 1
+        rf_min_samples_split = 2
+        rf_max_features_ui = "sqrt"
+        rf_max_leaf_nodes = 0
+        rf_min_impurity_decrease = 0.0
+        rf_bootstrap = True
         xgb_n_estimators = 100
         xgb_max_depth = 6
         xgb_learning_rate = 0.1
@@ -710,6 +893,10 @@ def main() -> None:
         xgb_gamma = 0.0
         xgb_reg_alpha = 0.0
         xgb_reg_lambda = 1.0
+        cat_iterations = 400
+        cat_depth = 6
+        cat_learning_rate = 0.1
+        cat_l2_leaf_reg = 3.0
 
         if model_kind == "logistic":
             lr_max_iter = st.number_input(
@@ -816,7 +1003,7 @@ def main() -> None:
                     help=tr(lang, "min_impurity_decrease_help"),
                     key="p_tree_min_impurity_decrease",
                 )
-        else:
+        elif model_kind == "xgboost":
             xgb_n_estimators = st.number_input(
                 tr(lang, "n_estimators"),
                 10,
@@ -902,9 +1089,114 @@ def main() -> None:
                 spw_c1, spw_c2 = st.columns([0.78, 0.22], gap="small")
                 with spw_c1:
                     st.caption(tr(lang, "spw_caption"))
-                with spw_c2:
-                    with st.popover("ℹ️"):
-                        st.markdown(tr(lang, "spw_popover"))
+        elif model_kind == "random_forest":
+            rf_n_estimators = st.number_input(
+                tr(lang, "rf_n_estimators"),
+                50,
+                1000,
+                200,
+                50,
+                help=tr(lang, "rf_n_estimators_help"),
+                key="p_rf_n_estimators",
+            )
+            rf_max_depth = st.number_input(
+                tr(lang, "rf_max_depth"),
+                0,
+                50,
+                8,
+                1,
+                help=tr(lang, "rf_max_depth_help"),
+                key="p_rf_max_depth",
+            )
+            rf_min_samples_leaf = st.number_input(
+                tr(lang, "min_samples_leaf"),
+                1,
+                200,
+                1,
+                1,
+                help=tr(lang, "min_samples_leaf_help"),
+                key="p_rf_min_samples_leaf",
+            )
+            with st.expander(tr(lang, "ux_advanced"), expanded=False):
+                rf_min_samples_split = st.number_input(
+                    tr(lang, "min_samples_split"),
+                    2,
+                    500,
+                    2,
+                    1,
+                    help=tr(lang, "min_samples_split_help"),
+                    key="p_rf_min_samples_split",
+                )
+                rf_max_features_ui = st.selectbox(
+                    tr(lang, "max_features"),
+                    ["all", "sqrt", "log2"],
+                    index=1,
+                    help=tr(lang, "max_features_help"),
+                    key="p_rf_max_features_ui",
+                )
+                rf_max_leaf_nodes = st.number_input(
+                    tr(lang, "max_leaf_nodes"),
+                    0,
+                    500,
+                    0,
+                    1,
+                    help=tr(lang, "max_leaf_nodes_help"),
+                    key="p_rf_max_leaf_nodes",
+                )
+                rf_min_impurity_decrease = st.number_input(
+                    tr(lang, "min_impurity_decrease"),
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.001,
+                    format="%.4f",
+                    help=tr(lang, "min_impurity_decrease_help"),
+                    key="p_rf_min_impurity_decrease",
+                )
+                rf_bootstrap = st.checkbox(
+                    tr(lang, "rf_bootstrap"),
+                    value=True,
+                    help=tr(lang, "rf_bootstrap_help"),
+                    key="p_rf_bootstrap",
+                )
+        else:
+            cat_iterations = st.number_input(
+                tr(lang, "cat_iterations"),
+                50,
+                2000,
+                400,
+                50,
+                help=tr(lang, "cat_iterations_help"),
+                key="p_cat_iterations",
+            )
+            cat_depth = st.number_input(
+                tr(lang, "cat_depth"),
+                2,
+                12,
+                6,
+                1,
+                help=tr(lang, "cat_depth_help"),
+                key="p_cat_depth",
+            )
+            cat_learning_rate = st.number_input(
+                tr(lang, "cat_learning_rate"),
+                0.01,
+                0.5,
+                0.1,
+                0.01,
+                help=tr(lang, "cat_learning_rate_help"),
+                key="p_cat_learning_rate",
+            )
+            with st.expander(tr(lang, "ux_advanced"), expanded=False):
+                cat_l2_leaf_reg = st.number_input(
+                    tr(lang, "cat_l2_leaf_reg"),
+                    0.1,
+                    50.0,
+                    3.0,
+                    0.1,
+                    help=tr(lang, "cat_l2_leaf_reg_help"),
+                    key="p_cat_l2_leaf_reg",
+                )
 
         st.divider()
         st.subheader(tr(lang, "ux_f1_search_section"))
@@ -944,6 +1236,9 @@ def main() -> None:
         )
 
     lang = st.session_state.get("app_lang", "en")
+    if st.session_state.get("app_page", "workbench") == "theory":
+        render_theory_page(lang)
+        return
 
     def err_msg(key: str, **kwargs: Any) -> str:
         return tr(lang, key, **kwargs)
@@ -991,7 +1286,9 @@ def main() -> None:
     _mk_label = {
         "logistic": tr(lang, "model_logistic"),
         "tree": tr(lang, "model_tree"),
+        "random_forest": tr(lang, "model_random_forest"),
         "xgboost": tr(lang, "model_xgboost"),
+        "catboost": tr(lang, "model_catboost"),
     }[model_kind]
     c_m1, c_m2, c_m3, c_m4 = st.columns(4)
     with c_m1:
@@ -1070,12 +1367,17 @@ def main() -> None:
                 tree_max_features_ui=str(tree_max_features_ui),
                 tree_max_leaf_nodes=int(tree_max_leaf_nodes),
                 tree_min_impurity_decrease=float(tree_min_impurity_decrease),
+                rf_max_features_ui=str(rf_max_features_ui),
+                rf_max_leaf_nodes=int(rf_max_leaf_nodes),
+                rf_min_impurity_decrease=float(rf_min_impurity_decrease),
+                rf_bootstrap=bool(rf_bootstrap),
                 xgb_subsample=float(xgb_subsample),
                 xgb_colsample_bytree=float(xgb_colsample_bytree),
                 xgb_min_child_weight=float(xgb_min_child_weight),
                 xgb_gamma=float(xgb_gamma),
                 xgb_reg_alpha=float(xgb_reg_alpha),
                 xgb_reg_lambda=float(xgb_reg_lambda),
+                cat_l2_leaf_reg=float(cat_l2_leaf_reg),
                 progress_callback=_on_prog,
             )
         _prog.empty()
@@ -1087,36 +1389,48 @@ def main() -> None:
             st.rerun()
 
     model = make_model(
-        model_kind,
-        int(random_state),
-        lr_max_iter,
-        lr_C,
-        lr_penalty,
-        lr_fit_intercept,
-        lr_tol,
-        cw0,
-        cw1,
-        tree_max_depth,
-        tree_min_samples_leaf,
-        tree_min_samples_split,
-        tree_criterion,
-        tree_max_features_ui,
-        tree_max_leaf_nodes,
-        tree_min_impurity_decrease,
-        xgb_n_estimators,
-        xgb_max_depth,
-        xgb_learning_rate,
-        base_spw if model_kind == "xgboost" else 1.0,
-        xgb_subsample,
-        xgb_colsample_bytree,
-        xgb_min_child_weight,
-        xgb_gamma,
-        xgb_reg_alpha,
-        xgb_reg_lambda,
+        kind=model_kind,
+        random_state=int(random_state),
+        lr_max_iter=int(lr_max_iter),
+        lr_C=float(lr_C),
+        lr_penalty=str(lr_penalty),
+        lr_fit_intercept=bool(lr_fit_intercept),
+        lr_tol=float(lr_tol),
+        cw0=float(cw0),
+        cw1=float(cw1),
+        tree_max_depth=tree_max_depth,
+        tree_min_samples_leaf=int(tree_min_samples_leaf),
+        tree_min_samples_split=int(tree_min_samples_split),
+        tree_criterion=str(tree_criterion),
+        tree_max_features_ui=str(tree_max_features_ui),
+        tree_max_leaf_nodes=int(tree_max_leaf_nodes),
+        tree_min_impurity_decrease=float(tree_min_impurity_decrease),
+        rf_n_estimators=int(rf_n_estimators),
+        rf_max_depth=rf_max_depth,
+        rf_min_samples_leaf=int(rf_min_samples_leaf),
+        rf_min_samples_split=int(rf_min_samples_split),
+        rf_max_features_ui=str(rf_max_features_ui),
+        rf_max_leaf_nodes=int(rf_max_leaf_nodes),
+        rf_min_impurity_decrease=float(rf_min_impurity_decrease),
+        rf_bootstrap=bool(rf_bootstrap),
+        xgb_n_estimators=int(xgb_n_estimators),
+        xgb_max_depth=int(xgb_max_depth),
+        xgb_learning_rate=float(xgb_learning_rate),
+        xgb_scale_pos_weight=float(base_spw if model_kind == "xgboost" else 1.0),
+        xgb_subsample=float(xgb_subsample),
+        xgb_colsample_bytree=float(xgb_colsample_bytree),
+        xgb_min_child_weight=float(xgb_min_child_weight),
+        xgb_gamma=float(xgb_gamma),
+        xgb_reg_alpha=float(xgb_reg_alpha),
+        xgb_reg_lambda=float(xgb_reg_lambda),
+        cat_iterations=int(cat_iterations),
+        cat_depth=int(cat_depth),
+        cat_learning_rate=float(cat_learning_rate),
+        cat_l2_leaf_reg=float(cat_l2_leaf_reg),
     )
 
     with st.spinner(tr(lang, "spinner_fit")):
-        if model_kind == "xgboost":
+        if model_kind in ("xgboost", "catboost"):
             model.fit(X_train, y_train)
         else:
             model.fit(X_train, np.ravel(y_train))
@@ -1158,10 +1472,7 @@ def main() -> None:
             c: tr(lang, f"col_{c}")
             for c in ["threshold", "accuracy", "precision", "recall", "f1"]
         }
-        section_title(
-            tr(lang, "sec_metrics_vs_t"),
-            tr(lang, "sec_metrics_vs_t_info"),
-        )
+        section_title(tr(lang, "sec_metrics_vs_t"))
         st.altair_chart(
             metrics_vs_threshold_chart(curve, lang), use_container_width=True
         )
@@ -1202,10 +1513,7 @@ def main() -> None:
                 help=tr(lang, "best_f1_help"),
             )
 
-        section_title(
-            tr(lang, "sec_pick_threshold"),
-            tr(lang, "sec_pick_threshold_info"),
-        )
+        section_title(tr(lang, "sec_pick_threshold"))
         st.caption(tr(lang, "ux_threshold_snaps"))
         sb1, sb2, sb3, sb4 = st.columns(4)
         with sb1:
@@ -1264,12 +1572,7 @@ def main() -> None:
 
         c1, c2 = st.columns(2)
         with c1:
-            cm_l, cm_i = st.columns([0.78, 0.22], gap="small")
-            with cm_l:
-                st.text(tr(lang, "cm_label"))
-            with cm_i:
-                with st.popover("ℹ️"):
-                    st.markdown(tr(lang, "cm_popover"))
+            st.text(tr(lang, "cm_label"))
             _cm = confusion_matrix(y_te, y_hat)
             _cm_chart = confusion_matrix_chart(_cm, lang)
             if _cm_chart is not None:
@@ -1282,18 +1585,10 @@ def main() -> None:
                     hide_index=False,
                 )
         with c2:
-            cr_l, cr_i = st.columns([0.78, 0.22], gap="small")
-            with cr_l:
-                st.text(tr(lang, "cr_label"))
-            with cr_i:
-                with st.popover("ℹ️"):
-                    st.markdown(tr(lang, "cr_popover"))
+            st.text(tr(lang, "cr_label"))
             st.text(classification_report(y_te, y_hat, zero_division=ZERO_DIV))
 
-        section_title(
-            tr(lang, "sec_numeric"),
-            tr(lang, "sec_numeric_info"),
-        )
+        section_title(tr(lang, "sec_numeric"))
         st.dataframe(
             curve.round(4).rename(columns=col_rename),
             use_container_width=True,

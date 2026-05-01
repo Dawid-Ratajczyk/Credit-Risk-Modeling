@@ -15,6 +15,31 @@ MESSAGES: dict[str, dict[str, str]] = {
         "header_data": "Data",
         "header_model": "Model",
         "header_threshold_sweep": "Threshold sweep",
+        "nav_page": "Page",
+        "nav_workbench": "Modeling workspace",
+        "nav_theory": "Information & theory",
+        "theory_title": "Information & theory",
+        "theory_intro": "Core concepts and metric definitions used in this app.",
+        "theory_model_logistic": (
+            "Logistic regression is a linear probabilistic classifier. "
+            "It models log-odds as a weighted sum of features and then maps to probability with the sigmoid function."
+        ),
+        "theory_model_tree": (
+            "Decision tree builds hierarchical if-then splits that partition feature space into regions. "
+            "Each leaf stores a class probability estimated from training samples in that region."
+        ),
+        "theory_model_random_forest": (
+            "Random forest trains many decision trees on bootstrapped samples and aggregates their predictions. "
+            "This usually lowers variance vs a single tree and improves stability."
+        ),
+        "theory_model_xgboost": (
+            "XGBoost adds trees sequentially, each one correcting residual errors of the previous ensemble. "
+            "It is often very strong on tabular data but sensitive to hyperparameter tuning."
+        ),
+        "theory_model_catboost": (
+            "CatBoost is a gradient-boosting method designed for robust tabular performance and stable defaults. "
+            "It typically behaves well with limited tuning and supports class weighting."
+        ),
         "csv_file": "CSV file",
         "csv_help": (
             "Each row is one observation; columns are inputs to the model. "
@@ -52,11 +77,15 @@ MESSAGES: dict[str, dict[str, str]] = {
         "model_help": (
             "Logistic regression: linear model on log-odds; smooth, strong baseline. "
             "Decision tree: axis-aligned rules; nonlinear but can overfit. "
-            "XGBoost: ensemble of shallow trees fit by gradient boosting on the loss."
+            "Random forest: bagged tree ensemble, robust baseline with lower variance. "
+            "XGBoost: ensemble of shallow trees fit by gradient boosting on the loss. "
+            "CatBoost: gradient boosting focused on strong tabular performance and stable defaults."
         ),
         "model_logistic": "Logistic regression",
         "model_tree": "Decision tree",
+        "model_random_forest": "Random forest",
         "model_xgboost": "XGBoost",
+        "model_catboost": "CatBoost",
         "class_weights": "Class weights (0 / 1)",
         "class_weights_popover": (
             "Training reweights the loss so errors on one class matter more. "
@@ -174,6 +203,35 @@ MESSAGES: dict[str, dict[str, str]] = {
         "reg_lambda": "reg_lambda (L2 on leaf weights)",
         "reg_lambda_help": (
             "L2 regularization on leaf scores; default 1 in XGBoost smooths leaf contributions."
+        ),
+        "rf_n_estimators": "n_estimators (trees)",
+        "rf_n_estimators_help": (
+            "Number of trees in the random forest ensemble. More trees usually reduce variance "
+            "and stabilize predictions, with higher compute cost."
+        ),
+        "rf_max_depth": "max_depth (0 = unlimited)",
+        "rf_max_depth_help": (
+            "Maximum depth of each tree in the forest. Lower depth regularizes and can improve generalization."
+        ),
+        "rf_bootstrap": "bootstrap",
+        "rf_bootstrap_help": (
+            "Sample training rows with replacement for each tree. This is the standard random-forest setup."
+        ),
+        "cat_iterations": "iterations",
+        "cat_iterations_help": (
+            "Number of boosting rounds in CatBoost. More rounds improve fit but can overfit without regularization."
+        ),
+        "cat_depth": "depth",
+        "cat_depth_help": (
+            "Tree depth for CatBoost weak learners. Higher depth captures more interactions but increases variance."
+        ),
+        "cat_learning_rate": "learning_rate",
+        "cat_learning_rate_help": (
+            "Shrinkage of each new CatBoost tree. Lower values are more conservative and often need more iterations."
+        ),
+        "cat_l2_leaf_reg": "l2_leaf_reg",
+        "cat_l2_leaf_reg_help": (
+            "L2 regularization on leaf values in CatBoost; larger values generally make the model more conservative."
         ),
         "spw_caption": (
             "scale_pos_weight is set from training class counts after split "
@@ -353,6 +411,31 @@ MESSAGES: dict[str, dict[str, str]] = {
         "header_data": "Dane",
         "header_model": "Model",
         "header_threshold_sweep": "Zakres progów",
+        "nav_page": "Strona",
+        "nav_workbench": "Przestrzeń modelowania",
+        "nav_theory": "Informacje i teoria",
+        "theory_title": "Informacje i teoria",
+        "theory_intro": "Najważniejsze pojęcia i definicje metryk używanych w aplikacji.",
+        "theory_model_logistic": (
+            "Regresja logistyczna to liniowy klasyfikator probabilistyczny. "
+            "Modeluje log-iloraz szans jako ważoną sumę cech, a następnie mapuje wynik do prawdopodobieństwa funkcją sigmoidalną."
+        ),
+        "theory_model_tree": (
+            "Drzewo decyzyjne buduje hierarchiczne podziały typu if-then, które dzielą przestrzeń cech na regiony. "
+            "Każdy liść przechowuje prawdopodobieństwo klasy oszacowane z próbek treningowych w tym regionie."
+        ),
+        "theory_model_random_forest": (
+            "Random forest trenuje wiele drzew na bootstrapowanych próbkach i agreguje ich predykcje. "
+            "Zwykle zmniejsza to wariancję względem pojedynczego drzewa i poprawia stabilność."
+        ),
+        "theory_model_xgboost": (
+            "XGBoost dodaje drzewa sekwencyjnie, a każde kolejne koryguje błędy resztowe poprzedniego zespołu. "
+            "Często daje bardzo dobre wyniki na danych tabelarycznych, ale jest wrażliwy na strojenie hiperparametrów."
+        ),
+        "theory_model_catboost": (
+            "CatBoost to metoda gradient boosting zaprojektowana pod stabilne i mocne wyniki na danych tabelarycznych. "
+            "Zwykle działa dobrze przy ograniczonym strojeniu i obsługuje ważenie klas."
+        ),
         "csv_file": "Plik CSV",
         "csv_help": (
             "Każdy wiersz to jedna obserwacja; kolumny to cechy modelu. "
@@ -390,11 +473,15 @@ MESSAGES: dict[str, dict[str, str]] = {
         "model_help": (
             "Regresja logistyczna: liniowy model na logitach; często silny punkt odniesienia. "
             "Drzewo decyzyjne: reguły osiowe; nieliniowość, ryzyko przeuczenia. "
-            "XGBoost: zespół płytkich drzew uczony gradientowym boostingiem."
+            "Random forest: bagging wielu drzew, stabilny baseline o mniejszej wariancji. "
+            "XGBoost: zespół płytkich drzew uczony gradientowym boostingiem. "
+            "CatBoost: boosting zaprojektowany pod mocne wyniki na danych tabelarycznych."
         ),
         "model_logistic": "Regresja logistyczna",
         "model_tree": "Drzewo decyzyjne",
+        "model_random_forest": "Random forest",
         "model_xgboost": "XGBoost",
+        "model_catboost": "CatBoost",
         "class_weights": "Wagi klas (0 / 1)",
         "class_weights_popover": (
             "Trening przeskalowuje funkcję straty tak, by błędy na jednej klasie ważyły więcej. "
@@ -506,6 +593,35 @@ MESSAGES: dict[str, dict[str, str]] = {
         "reg_alpha_help": "Regularyzacja L1 na wynikach liści; sprzyja rzadkości w zespole.",
         "reg_lambda": "reg_lambda (L2 na liściach)",
         "reg_lambda_help": "Regularyzacja L2 na wynikach liści; domyślnie 1 w XGBoost wygładza wkłady liści.",
+        "rf_n_estimators": "n_estimators (liczba drzew)",
+        "rf_n_estimators_help": (
+            "Liczba drzew w lesie losowym. Więcej drzew zwykle zmniejsza wariancję i stabilizuje predykcje, "
+            "ale zwiększa koszt obliczeń."
+        ),
+        "rf_max_depth": "max_depth (0 = bez limitu)",
+        "rf_max_depth_help": (
+            "Maksymalna głębokość pojedynczych drzew w lesie. Mniejsza głębokość działa regularyzująco."
+        ),
+        "rf_bootstrap": "bootstrap",
+        "rf_bootstrap_help": (
+            "Losowanie wierszy ze zwracaniem dla każdego drzewa. To standardowa konfiguracja random forest."
+        ),
+        "cat_iterations": "iterations",
+        "cat_iterations_help": (
+            "Liczba rund boostingu w CatBoost. Więcej rund poprawia dopasowanie, ale może przeuczyć bez regularyzacji."
+        ),
+        "cat_depth": "depth",
+        "cat_depth_help": (
+            "Głębokość drzew bazowych CatBoost. Większa głębokość łapie więcej interakcji, ale podnosi wariancję."
+        ),
+        "cat_learning_rate": "learning_rate",
+        "cat_learning_rate_help": (
+            "Shrinkage wkładu kolejnych drzew CatBoost. Mniejsze wartości są ostrożniejsze i zwykle wymagają więcej iteracji."
+        ),
+        "cat_l2_leaf_reg": "l2_leaf_reg",
+        "cat_l2_leaf_reg_help": (
+            "Regularyzacja L2 na wartościach liści w CatBoost; większe wartości zwykle dają bardziej zachowawczy model."
+        ),
         "spw_caption": (
             "scale_pos_weight ustawiane z liczebności klas po podziale "
             "(negatywy / pozytywy), pomnożone przez (waga₁ / waga₀)."
