@@ -129,22 +129,7 @@ def render_theory_page(lang: str) -> None:
     st.markdown(f"### {tr(lang, 'class_weights')}")
     st.markdown(tr(lang, "class_weights_popover"))
 
-    section_title(tr(lang, "header_threshold_sweep"))
-    st.markdown(f"- {tr(lang, 't_min_help')}")
-    st.markdown(f"- {tr(lang, 't_max_help')}")
-    st.markdown(f"- {tr(lang, 't_step_help')}")
-    st.markdown(f"- {tr(lang, 'slider_threshold_help')}")
-
-    section_title(tr(lang, "sec_metrics_vs_t"))
-    st.markdown(tr(lang, "sec_metrics_vs_t_info"))
-
-    section_title(tr(lang, "sec_pick_threshold"))
-    st.markdown(f"- {tr(lang, 'sec_pick_threshold_info')}")
-    st.markdown(f"- {tr(lang, 'cm_popover')}")
-    st.markdown(f"- {tr(lang, 'cr_popover')}")
-
-    section_title(tr(lang, "sec_numeric"))
-    st.markdown(tr(lang, "sec_numeric_info"))
+    # Theory page intentionally focuses on model families and their parameters.
 
 
 def preprocess_features(
