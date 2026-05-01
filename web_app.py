@@ -622,7 +622,10 @@ def search_best_f1_hyperparams(
         combos = list(itertools.product(grid_c, grid_pen))
         total = len(combos)
         for i, (C, pen) in enumerate(combos):
-            m = make_model(kind="logistic", **base_kwargs, lr_C=float(C), lr_penalty=str(pen))
+            params = dict(base_kwargs)
+            params["lr_C"] = float(C)
+            params["lr_penalty"] = str(pen)
+            m = make_model(kind="logistic", **params)
             f1m = _max_f1_on_test_grid(
                 m, "logistic", X_train, y_train, X_test, y_test, thresholds, eval_msg
             )
@@ -638,13 +641,11 @@ def search_best_f1_hyperparams(
         combos = list(itertools.product(grid_depth, grid_leaf, grid_split))
         total = len(combos)
         for i, (td, lf, sp) in enumerate(combos):
-            m = make_model(
-                kind="tree",
-                **base_kwargs,
-                tree_max_depth=int(td),
-                tree_min_samples_leaf=int(lf),
-                tree_min_samples_split=int(sp),
-            )
+            params = dict(base_kwargs)
+            params["tree_max_depth"] = int(td)
+            params["tree_min_samples_leaf"] = int(lf)
+            params["tree_min_samples_split"] = int(sp)
+            m = make_model(kind="tree", **params)
             f1m = _max_f1_on_test_grid(
                 m, "tree", X_train, y_train, X_test, y_test, thresholds, eval_msg
             )
@@ -664,14 +665,12 @@ def search_best_f1_hyperparams(
         combos = list(itertools.product(grid_ne, grid_depth, grid_leaf))
         total = len(combos)
         for i, (ne, md, lf) in enumerate(combos):
-            m = make_model(
-                kind="random_forest",
-                **base_kwargs,
-                rf_n_estimators=int(ne),
-                rf_max_depth=int(md),
-                rf_min_samples_leaf=int(lf),
-                rf_min_samples_split=2,
-            )
+            params = dict(base_kwargs)
+            params["rf_n_estimators"] = int(ne)
+            params["rf_max_depth"] = int(md)
+            params["rf_min_samples_leaf"] = int(lf)
+            params["rf_min_samples_split"] = 2
+            m = make_model(kind="random_forest", **params)
             f1m = _max_f1_on_test_grid(
                 m, "random_forest", X_train, y_train, X_test, y_test, thresholds, eval_msg
             )
@@ -692,14 +691,12 @@ def search_best_f1_hyperparams(
             combos = list(itertools.product(grid_ne, grid_md, grid_lr))
             total = len(combos)
             for i, (ne, md, lr) in enumerate(combos):
-                m = make_model(
-                    kind="xgboost",
-                    **base_kwargs,
-                    xgb_n_estimators=int(ne),
-                    xgb_max_depth=int(md),
-                    xgb_learning_rate=float(lr),
-                    xgb_scale_pos_weight=float(base_spw),
-                )
+                params = dict(base_kwargs)
+                params["xgb_n_estimators"] = int(ne)
+                params["xgb_max_depth"] = int(md)
+                params["xgb_learning_rate"] = float(lr)
+                params["xgb_scale_pos_weight"] = float(base_spw)
+                m = make_model(kind="xgboost", **params)
                 f1m = _max_f1_on_test_grid(
                     m, "xgboost", X_train, y_train, X_test, y_test, thresholds, eval_msg
                 )
@@ -719,14 +716,12 @@ def search_best_f1_hyperparams(
             combos = list(itertools.product(grid_it, grid_depth, grid_lr))
             total = len(combos)
             for i, (it, depth, lr) in enumerate(combos):
-                m = make_model(
-                    kind="catboost",
-                    **base_kwargs,
-                    cat_iterations=int(it),
-                    cat_depth=int(depth),
-                    cat_learning_rate=float(lr),
-                    cat_l2_leaf_reg=float(cat_l2_leaf_reg),
-                )
+                params = dict(base_kwargs)
+                params["cat_iterations"] = int(it)
+                params["cat_depth"] = int(depth)
+                params["cat_learning_rate"] = float(lr)
+                params["cat_l2_leaf_reg"] = float(cat_l2_leaf_reg)
+                m = make_model(kind="catboost", **params)
                 f1m = _max_f1_on_test_grid(
                     m, "catboost", X_train, y_train, X_test, y_test, thresholds, eval_msg
                 )
