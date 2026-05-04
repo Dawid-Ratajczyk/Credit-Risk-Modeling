@@ -12,6 +12,7 @@ from collections.abc import Callable
 from typing import Any, Literal
 
 import altair as alt
+import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -34,6 +35,9 @@ from xgboost import XGBClassifier
 
 ZERO_DIV = 0
 MAX_CSV_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MiB cap for uploaded CSV
+MAX_MODEL_BUNDLE_BYTES = 32 * 1024 * 1024  # trained model import cap
+MODEL_BUNDLE_FORMAT = "credit_risk_model_bundle"
+MODEL_BUNDLE_VERSION = 1
 
 
 def section_title(title: str) -> None:
@@ -157,6 +161,52 @@ def preprocess_features(
     X, y = X.loc[mask], y.loc[mask]
     y = y.astype(int)
     return X, y
+
+
+def validate_model_bundle(obj: Any) -> tuple[bool, str]:
+    """Return (ok, err_locale_key)."""
+    if not isinstance(obj, dict):
+        return False, "err_bundle_not_dict"
+    if obj.get("format") != MODEL_BUNDLE_FORMAT:
+        return False, "err_bundle_format"
+    try:
+        if int(obj.get("version", -1)) != MODEL_BUNDLE_VERSION:
+            return False, "err_bundle_version"
+    except (TypeError, ValueError):
+        return False, "err_bundle_version"
+    mk = obj.get("model_kind")
+    if mk not in ("logistic", "tree", "random_forest", "xgboost", "catboost"):
+        return False, "err_bundle_model_kind"
+    cols = obj.get("feature_columns")
+    if not isinstance(cols, list) or not cols:
+        return False, "err_bundle_features"
+    if not all(isinstance(c, str) and c for c in cols):
+        return False, "err_bundle_features"
+    m = obj.get("model")
+    if m is None or not hasattr(m, "predict_proba"):
+        return False, "err_bundle_model"
+    return True, ""
+
+
+def align_features_for_bundle(
+    X: pd.DataFrame, feature_columns: list[str]
+) -> tuple[pd.DataFrame, list[str]]:
+    """Reindex X to the columns saved with the model; missing columns become 0."""
+    missing = [c for c in feature_columns if c not in X.columns]
+    aligned = X.reindex(columns=feature_columns, fill_value=0.0)
+    return aligned, missing
+
+
+def build_export_bundle(
+    model: Any, model_kind: str, feature_columns: list[str]
+) -> dict[str, Any]:
+    return {
+        "format": MODEL_BUNDLE_FORMAT,
+        "version": MODEL_BUNDLE_VERSION,
+        "model_kind": model_kind,
+        "feature_columns": list(feature_columns),
+        "model": model,
+    }
 
 
 def build_class_weight(w0: float, w1: float) -> dict[int, float]:
@@ -752,6 +802,9 @@ def main() -> None:
         for _pk, _pv in _patch.items():
             st.session_state[_pk] = _pv
 
+    st.session_state.setdefault("model_io_mode", "train")
+    st.session_state.setdefault("imported_bundle", None)
+
     with st.sidebar:
         st.selectbox(
             "Language / Język",
@@ -1181,11 +1234,15 @@ def main() -> None:
         st.divider()
         st.subheader(tr(lang, "ux_f1_search_section"))
         st.caption(tr(lang, "f1_search_help"))
+        _import_mode = st.session_state.get("model_io_mode", "train") == "import"
+        if _import_mode:
+            st.caption(tr(lang, "model_io_f1_disabled"))
         if st.button(
             tr(lang, "f1_search_btn"),
             key="btn_f1_search",
             type="primary",
             use_container_width=True,
+            disabled=_import_mode,
         ):
             st.session_state["_f1_search_requested"] = True
             st.rerun()
@@ -1214,6 +1271,61 @@ def main() -> None:
             index=2,
             help=tr(lang, "t_step_help"),
         )
+
+        with st.expander(tr(lang, "model_io_section"), expanded=False):
+            st.radio(
+                tr(lang, "model_io_mode_label"),
+                ["train", "import"],
+                horizontal=True,
+                format_func=lambda v: tr(lang, f"model_io_mode_{v}"),
+                key="model_io_mode",
+            )
+            if st.session_state.get("model_io_mode", "train") == "import":
+                mf = st.file_uploader(
+                    tr(lang, "model_io_upload"),
+                    type=["joblib"],
+                    help=tr(lang, "model_io_upload_help"),
+                    key="model_bundle_upload",
+                )
+                if mf is not None:
+                    rawb = mf.getvalue()
+                    if len(rawb) > MAX_MODEL_BUNDLE_BYTES:
+                        st.error(
+                            tr(
+                                lang,
+                                "err_model_upload_too_large",
+                                max_mb=MAX_MODEL_BUNDLE_BYTES // (1024 * 1024),
+                            )
+                        )
+                        st.session_state.imported_bundle = None
+                    else:
+                        try:
+                            loaded = joblib.load(io.BytesIO(rawb))
+                            ok_b, err_k = validate_model_bundle(loaded)
+                            if ok_b:
+                                st.session_state.imported_bundle = loaded
+                                st.success(
+                                    tr(
+                                        lang,
+                                        "model_io_import_ok",
+                                        kind=loaded["model_kind"],
+                                        n_features=len(loaded["feature_columns"]),
+                                    )
+                                )
+                            else:
+                                st.session_state.imported_bundle = None
+                                st.error(tr(lang, err_k))
+                        except Exception as ex:
+                            st.session_state.imported_bundle = None
+                            st.error(f"{tr(lang, 'err_import_load')}: {ex}")
+                if st.session_state.get("imported_bundle"):
+                    if st.button(
+                        tr(lang, "model_io_clear_import"),
+                        key="btn_clear_model_import",
+                    ):
+                        st.session_state.imported_bundle = None
+                        st.rerun()
+            st.caption(tr(lang, "model_io_caption"))
 
     lang = st.session_state.get("app_lang", "en")
     if st.session_state.get("app_page", "workbench") == "theory":
@@ -1263,13 +1375,18 @@ def main() -> None:
         st.error(str(e))
         return
 
+    _preview_kind = model_kind
+    if st.session_state.get("model_io_mode", "train") == "import":
+        _bprev = st.session_state.get("imported_bundle")
+        if isinstance(_bprev, dict) and validate_model_bundle(_bprev)[0]:
+            _preview_kind = str(_bprev["model_kind"])
     _mk_label = {
         "logistic": tr(lang, "model_logistic"),
         "tree": tr(lang, "model_tree"),
         "random_forest": tr(lang, "model_random_forest"),
         "xgboost": tr(lang, "model_xgboost"),
         "catboost": tr(lang, "model_catboost"),
-    }[model_kind]
+    }[_preview_kind]
     c_m1, c_m2, c_m3, c_m4 = st.columns(4)
     with c_m1:
         st.metric(
@@ -1320,7 +1437,10 @@ def main() -> None:
     base_spw = (n_neg / max(n_pos, 1)) * (float(cw1) / float(cw0))
 
     _thr_for_search = _threshold_grid(float(t_min), float(t_max), float(t_step))
-    if st.session_state.pop("_f1_search_requested", False):
+    if (
+        st.session_state.get("model_io_mode", "train") == "train"
+        and st.session_state.pop("_f1_search_requested", False)
+    ):
         em = tr(lang, "err_two_classes_eval")
         _prog = st.progress(0)
 
@@ -1368,52 +1488,98 @@ def main() -> None:
             st.session_state["_f1_search_notice"] = float(bf1)
             st.rerun()
 
-    model = make_model(
-        kind=model_kind,
-        random_state=int(random_state),
-        lr_max_iter=int(lr_max_iter),
-        lr_C=float(lr_C),
-        lr_penalty=str(lr_penalty),
-        lr_fit_intercept=bool(lr_fit_intercept),
-        lr_tol=float(lr_tol),
-        cw0=float(cw0),
-        cw1=float(cw1),
-        tree_max_depth=tree_max_depth,
-        tree_min_samples_leaf=int(tree_min_samples_leaf),
-        tree_min_samples_split=int(tree_min_samples_split),
-        tree_criterion=str(tree_criterion),
-        tree_max_features_ui=str(tree_max_features_ui),
-        tree_max_leaf_nodes=int(tree_max_leaf_nodes),
-        tree_min_impurity_decrease=float(tree_min_impurity_decrease),
-        rf_n_estimators=int(rf_n_estimators),
-        rf_max_depth=rf_max_depth,
-        rf_min_samples_leaf=int(rf_min_samples_leaf),
-        rf_min_samples_split=int(rf_min_samples_split),
-        rf_max_features_ui=str(rf_max_features_ui),
-        rf_max_leaf_nodes=int(rf_max_leaf_nodes),
-        rf_min_impurity_decrease=float(rf_min_impurity_decrease),
-        rf_bootstrap=bool(rf_bootstrap),
-        xgb_n_estimators=int(xgb_n_estimators),
-        xgb_max_depth=int(xgb_max_depth),
-        xgb_learning_rate=float(xgb_learning_rate),
-        xgb_scale_pos_weight=float(base_spw if model_kind == "xgboost" else 1.0),
-        xgb_subsample=float(xgb_subsample),
-        xgb_colsample_bytree=float(xgb_colsample_bytree),
-        xgb_min_child_weight=float(xgb_min_child_weight),
-        xgb_gamma=float(xgb_gamma),
-        xgb_reg_alpha=float(xgb_reg_alpha),
-        xgb_reg_lambda=float(xgb_reg_lambda),
-        cat_iterations=int(cat_iterations),
-        cat_depth=int(cat_depth),
-        cat_learning_rate=float(cat_learning_rate),
-        cat_l2_leaf_reg=float(cat_l2_leaf_reg),
-    )
+    io_mode = st.session_state.get("model_io_mode", "train")
+    imported = st.session_state.get("imported_bundle")
 
-    with st.spinner(tr(lang, "spinner_fit")):
-        if model_kind in ("xgboost", "catboost"):
-            model.fit(X_train, y_train)
-        else:
-            model.fit(X_train, np.ravel(y_train))
+    if io_mode == "import":
+        if not isinstance(imported, dict):
+            st.error(tr(lang, "err_no_import_file"))
+            return
+        ok_ib, err_key = validate_model_bundle(imported)
+        if not ok_ib:
+            st.error(tr(lang, err_key))
+            return
+        fc = list(imported["feature_columns"])
+        X_train, miss_tr = align_features_for_bundle(X_train, fc)
+        X_test, miss_te = align_features_for_bundle(X_test, fc)
+        if miss_tr or miss_te:
+            _miss = sorted(set(miss_tr + miss_te))
+            st.warning(
+                tr(
+                    lang,
+                    "warn_bundle_missing_cols",
+                    cols=", ".join(_miss[:25]),
+                )
+            )
+        model = imported["model"]
+        active_model_kind = str(imported["model_kind"])
+    else:
+        active_model_kind = model_kind
+        model = make_model(
+            kind=model_kind,
+            random_state=int(random_state),
+            lr_max_iter=int(lr_max_iter),
+            lr_C=float(lr_C),
+            lr_penalty=str(lr_penalty),
+            lr_fit_intercept=bool(lr_fit_intercept),
+            lr_tol=float(lr_tol),
+            cw0=float(cw0),
+            cw1=float(cw1),
+            tree_max_depth=tree_max_depth,
+            tree_min_samples_leaf=int(tree_min_samples_leaf),
+            tree_min_samples_split=int(tree_min_samples_split),
+            tree_criterion=str(tree_criterion),
+            tree_max_features_ui=str(tree_max_features_ui),
+            tree_max_leaf_nodes=int(tree_max_leaf_nodes),
+            tree_min_impurity_decrease=float(tree_min_impurity_decrease),
+            rf_n_estimators=int(rf_n_estimators),
+            rf_max_depth=rf_max_depth,
+            rf_min_samples_leaf=int(rf_min_samples_leaf),
+            rf_min_samples_split=int(rf_min_samples_split),
+            rf_max_features_ui=str(rf_max_features_ui),
+            rf_max_leaf_nodes=int(rf_max_leaf_nodes),
+            rf_min_impurity_decrease=float(rf_min_impurity_decrease),
+            rf_bootstrap=bool(rf_bootstrap),
+            xgb_n_estimators=int(xgb_n_estimators),
+            xgb_max_depth=int(xgb_max_depth),
+            xgb_learning_rate=float(xgb_learning_rate),
+            xgb_scale_pos_weight=float(base_spw if model_kind == "xgboost" else 1.0),
+            xgb_subsample=float(xgb_subsample),
+            xgb_colsample_bytree=float(xgb_colsample_bytree),
+            xgb_min_child_weight=float(xgb_min_child_weight),
+            xgb_gamma=float(xgb_gamma),
+            xgb_reg_alpha=float(xgb_reg_alpha),
+            xgb_reg_lambda=float(xgb_reg_lambda),
+            cat_iterations=int(cat_iterations),
+            cat_depth=int(cat_depth),
+            cat_learning_rate=float(cat_learning_rate),
+            cat_l2_leaf_reg=float(cat_l2_leaf_reg),
+        )
+
+        with st.spinner(tr(lang, "spinner_fit")):
+            if model_kind in ("xgboost", "catboost"):
+                model.fit(X_train, y_train)
+            else:
+                model.fit(X_train, np.ravel(y_train))
+
+    _buf = io.BytesIO()
+    joblib.dump(
+        build_export_bundle(model, active_model_kind, list(X_train.columns)),
+        _buf,
+    )
+    _bundle_payload = _buf.getvalue()
+    _dl1, _dl2 = st.columns([1, 2], gap="small")
+    with _dl1:
+        st.download_button(
+            tr(lang, "model_io_export_btn"),
+            data=_bundle_payload,
+            file_name=f"credit_risk_model_{active_model_kind}.joblib",
+            mime="application/octet-stream",
+            help=tr(lang, "model_io_export_help"),
+            key="download_model_bundle",
+        )
+    with _dl2:
+        st.caption(tr(lang, "model_io_export_caption"))
 
     if t_min >= t_max:
         st.error(tr(lang, "err_t_order"))

@@ -386,11 +386,44 @@ MESSAGES: dict[str, dict[str, str]] = {
         "f1_search_spinner": "Searching hyperparameter grid for best F1…",
         "f1_search_done": "Best max F1 on the test sweep is {f1:.4f}. Matching parameters were applied in the sidebar.",
         "f1_search_fail": "Search did not find a valid configuration (check data and test set class balance).",
-        "ux_sidebar_hint": "Data first, then model and thresholds. Use ℹ️ for theory.",
+        "model_io_section": "Trained model — import / export",
+        "model_io_mode_label": "Model source",
+        "model_io_mode_train": "Train from sidebar",
+        "model_io_mode_import": "Load .joblib bundle",
+        "model_io_upload": "Model bundle file (.joblib)",
+        "model_io_upload_help": (
+            "File produced by **Export** in this app (joblib). It contains the fitted estimator and the "
+            "exact feature column order after preprocessing. Use the same preprocessing (target, dropped IDs, CSV) "
+            "so columns line up; missing columns are filled with 0. "
+            "Do not load bundles from untrusted sources (pickle/joblib can execute code)."
+        ),
+        "model_io_import_ok": "Loaded bundle: **{kind}**, {n_features} features.",
+        "model_io_clear_import": "Clear imported model",
+        "model_io_caption": (
+            "Export saves the current fitted classifier plus feature names. "
+            "Re-import on the same or compatible data to skip re-training."
+        ),
+        "model_io_export_btn": "Download model bundle",
+        "model_io_export_help": "Saves estimator + feature column list (joblib).",
+        "model_io_export_caption": "Use **Load .joblib bundle** after download to restore this model.",
+        "model_io_f1_disabled": "Auto-tune is disabled while using an imported model.",
+        "err_no_import_file": "Choose **Load .joblib bundle** and upload a valid model file.",
+        "err_import_load": "Could not read model file",
+        "err_model_upload_too_large": "Model file is too large (maximum {max_mb} MB).",
+        "err_bundle_not_dict": "Invalid bundle: expected a dictionary.",
+        "err_bundle_format": "Invalid bundle: wrong format marker (export again from this app).",
+        "err_bundle_version": "Invalid bundle: unsupported version (export again from this app).",
+        "err_bundle_model_kind": "Invalid bundle: unknown model_kind.",
+        "err_bundle_features": "Invalid bundle: feature_columns must be a non-empty list of strings.",
+        "err_bundle_model": "Invalid bundle: missing model or no predict_proba.",
+        "warn_bundle_missing_cols": (
+            "Some bundle feature columns were missing from the current data; they were filled with 0: {cols}"
+        ),
+        "ux_sidebar_hint": "Data first, then model and thresholds. Theory lives on the separate page.",
         "ux_advanced": "Advanced options",
         "ux_f1_search_section": "Auto-tune (grid)",
         "ux_model_active": "Active model",
-        "ux_model_active_help": "Classifier used for training and the charts below.",
+        "ux_model_active_help": "Classifier used for evaluation below (trained in this run or loaded from a bundle).",
         "ux_toast_f1": "Grid search done. Best max F1 ≈ {f1:.4f}",
         "ux_threshold_snaps": "Jump the inspection slider to a notable cutoff:",
         "ux_snap_f1": "Best F1",
@@ -774,11 +807,44 @@ MESSAGES: dict[str, dict[str, str]] = {
         "f1_search_spinner": "Przeszukiwanie siatki hiperparametrów pod kątem F1…",
         "f1_search_done": "Najlepsze maksymalne F1 na teście: {f1:.4f}. Pasujące parametry ustawiono w panelu bocznym.",
         "f1_search_fail": "Nie znaleziono poprawnej konfiguracji (sprawdź dane i balans klas w teście).",
-        "ux_sidebar_hint": "Najpierw dane, potem model i progi. ℹ️ — krótki opis teorii.",
+        "model_io_section": "Wytrenowany model — import / eksport",
+        "model_io_mode_label": "Źródło modelu",
+        "model_io_mode_train": "Trenuj z panelu",
+        "model_io_mode_import": "Wczytaj paczkę .joblib",
+        "model_io_upload": "Plik paczki modelu (.joblib)",
+        "model_io_upload_help": (
+            "Plik z przycisku **Pobierz paczkę** w tej aplikacji (joblib). Zawiera dopasowany estymator oraz "
+            "dokładną kolejność kolumn cech po preprocessingu. Użyj tych samych ustawień (cel, usuwane ID, CSV), "
+            "by kolumny się zgadzały; brakujące kolumny są uzupełniane zerami. "
+            "Nie wczytuj paczek z niezaufanych źródeł (pickle/joblib może wykonać kod)."
+        ),
+        "model_io_import_ok": "Wczytano paczkę: **{kind}**, {n_features} cech.",
+        "model_io_clear_import": "Wyczyść importowany model",
+        "model_io_caption": (
+            "Eksport zapisuje bieżący dopasowany klasyfikator oraz nazwy cech. "
+            "Import na tych samych lub zgodnych danych pomija ponowny trening."
+        ),
+        "model_io_export_btn": "Pobierz paczkę modelu",
+        "model_io_export_help": "Zapis estymatora + lista kolumn cech (joblib).",
+        "model_io_export_caption": "Po pobraniu użyj **Wczytaj paczkę .joblib**, by przywrócić model.",
+        "model_io_f1_disabled": "Auto-strojenie jest wyłączone przy imporcie modelu.",
+        "err_no_import_file": "Wybierz **Wczytaj paczkę .joblib** i wgraj poprawny plik modelu.",
+        "err_import_load": "Nie udało się odczytać pliku modelu",
+        "err_model_upload_too_large": "Plik modelu jest za duży (maksymalnie {max_mb} MB).",
+        "err_bundle_not_dict": "Niepoprawna paczka: oczekiwano słownika.",
+        "err_bundle_format": "Niepoprawna paczka: zły znacznik formatu (wyeksportuj ponownie z tej aplikacji).",
+        "err_bundle_version": "Niepoprawna paczka: nieobsługiwana wersja (wyeksportuj ponownie z tej aplikacji).",
+        "err_bundle_model_kind": "Niepoprawna paczka: nieznany model_kind.",
+        "err_bundle_features": "Niepoprawna paczka: feature_columns musi być niepustą listą stringów.",
+        "err_bundle_model": "Niepoprawna paczka: brak modelu lub brak predict_proba.",
+        "warn_bundle_missing_cols": (
+            "Część cech z paczki nie występuje w bieżących danych — uzupełniono zerami: {cols}"
+        ),
+        "ux_sidebar_hint": "Najpierw dane, potem model i progi. Teoria jest na osobnej stronie.",
         "ux_advanced": "Opcje zaawansowane",
         "ux_f1_search_section": "Auto-strojenie (siatka)",
         "ux_model_active": "Aktywny model",
-        "ux_model_active_help": "Klasyfikator użyty do treningu i wykresów poniżej.",
+        "ux_model_active_help": "Klasyfikator użyty do ewaluacji poniżej (wytrenowany w tej sesji lub wczytany z paczki).",
         "ux_toast_f1": "Siatka zakończona. Najlepsze max F1 ≈ {f1:.4f}",
         "ux_threshold_snaps": "Ustaw suwak inspekcji na wybrany próg:",
         "ux_snap_f1": "Max F1",
